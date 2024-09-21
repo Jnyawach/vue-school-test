@@ -2,7 +2,12 @@
 
 namespace App\Actions;
 
+use App\Jobs\UserSyncJob;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
 
 
 class UserAction
@@ -19,9 +24,10 @@ class UserAction
    public function updateUser(User $user){
        try {
            $user->update([
-               'firstname'=>fake()->name(),
-               'lastname'=>fake()->name(),
-               'timezone'=>fake()->randomElement(['CET', 'CST', 'GMT+1']),
+               'first_name'=>fake()->name(),
+               'last_name'=>fake()->name(),
+               'sync_status'=>false,
+               'time_zone'=>fake()->randomElement(['CET', 'CST', 'GMT+1']),
            ]);
        }catch (\Exception $e){
            return $e->getMessage();
@@ -38,5 +44,21 @@ class UserAction
        }catch (\Exception $e){
            return $e->getMessage();
        }
+   }
+
+   public function syncUsers(){
+       try {
+           User::where('updated_at', '>=', Carbon::now()->subHour())
+               ->where('sync_status',false)
+               ->limit(40000)
+               ->chunk(1000, fn($users)=>UserSyncJob::dispatch($users));
+
+
+
+       }catch (\Exception $e){
+           return $e->getMessage();
+       }
+
+
    }
 }
