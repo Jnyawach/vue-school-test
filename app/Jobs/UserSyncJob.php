@@ -57,8 +57,6 @@ class UserSyncJob implements ShouldQueue
             $data['batches']['subscribers'][]=$user_data;
         }
 
-
-
         // sync users
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $post_url);
